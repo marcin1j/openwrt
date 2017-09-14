@@ -33,11 +33,13 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_DRIVER_11AC_SUPPORT \
 
 WPAD_PROVIDERS:=wpad-mini wpad wpad-openssl wpad-wolfssl \
-		wpad-mesh-openssl wpad-mesh-wolfssl
+		wpad-mesh-openssl wpad-mesh-wolfssl \
+		wpad-custom
 
 SUPPLICANT_ONLY_PROVIDERS:=wpa-supplicant-mini wpa-supplicant-p2p \
 			   wpa-supplicant wpa-supplicant-openssl wpa-supplicant-wolfssl \
-			   wpa-supplicant-mesh-openssl wpa-supplicant-mesh-wolfssl
+			   wpa-supplicant-mesh-openssl wpa-supplicant-mesh-wolfssl \
+			   wpa-supplicant-custom
 
 HOSTAPD_ONLY_PROVIDERS:=hostapd-mini hostapd hostapd-openssl hostapd-wolfssl
 
@@ -76,6 +78,9 @@ SSL_VARIANT=$(strip \
 CONFIG_VARIANT:=$(LOCAL_VARIANT)
 ifeq ($(LOCAL_VARIANT),mesh)
   CONFIG_VARIANT:=full
+endif
+ifeq ($(LOCAL_VARIANT),custom)
+  CONFIG_VARIANT:=mini
 endif
 
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
@@ -116,6 +121,17 @@ ifeq ($(LOCAL_VARIANT),full)
     DRIVER_MAKEOPTS += CONFIG_TLS=wolfssl CONFIG_WPS_NFC=1
     TARGET_LDFLAGS += -lwolfssl
   endif
+endif
+
+ifeq ($(LOCAL_VARIANT),custom)
+  ifdef CONFIG_WPA_ROAMING
+    DRIVER_MAKEOPTS += CONFIG_IEEE80211R=y
+  endif
+endif
+
+ifeq ($(LOCAL_VARIANT),custom)
+  PKG_CONFIG_DEPENDS += \
+    CONFIG_WPA_ROAMING
 endif
 
 ifneq ($(LOCAL_TYPE),hostapd)
@@ -301,6 +317,17 @@ endef
 Package/wpad-mesh-openssl/description = $(Package/wpad-mesh/description)
 Package/wpad-mesh-wolfssl/description = $(Package/wpad-mesh/description)
 
+define Package/wpad-custom
+$(call Package/wpad/Default)
+  TITLE+= (custom)
+  VARIANT:=wpad-custom
+  CONFLICTS:=$(filter-out wpad-custom ,$(ANY_PROVIDERS))
+endef
+
+define Package/wpad-custom/description
+  TODO
+endef
+
 define Package/wpa-supplicant/Default
   SECTION:=net
   CATEGORY:=Network
@@ -387,6 +414,13 @@ define Package/wpa-supplicant-mini
   DEPENDS:=$(DRV_DEPENDS)
   VARIANT:=supplicant-mini
   PROVIDES:=wpa-supplicant
+endef
+
+define Package/wpa-supplicant-custom
+  $(Package/wpa-supplicant)
+  TITLE:=WPA Supplicant (custom version)
+  CONFLICTS:=$(filter-out wpa-supplicant-custom ,$(SUPPLICANT_ONLY_PROVIDERS))
+  VARIANT:=supplicant-custom
 endef
 
 define Package/wpa-cli
@@ -579,6 +613,7 @@ Package/wpad-openssl/install = $(Package/wpad/install)
 Package/wpad-wolfssl/install = $(Package/wpad/install)
 Package/wpad-mesh-openssl/install = $(Package/wpad/install)
 Package/wpad-mesh-wolfssl/install = $(Package/wpad/install)
+Package/wpad-custom/install = $(Package/wpad/install)
 
 define Package/wpa-supplicant/install
 	$(call Install/supplicant,$(1))
@@ -590,6 +625,7 @@ Package/wpa-supplicant-openssl/install = $(Package/wpa-supplicant/install)
 Package/wpa-supplicant-wolfssl/install = $(Package/wpa-supplicant/install)
 Package/wpa-supplicant-mesh-openssl/install = $(Package/wpa-supplicant/install)
 Package/wpa-supplicant-mesh-wolfssl/install = $(Package/wpa-supplicant/install)
+Package/wpa-supplicant-custom/install = $(Package/wpa-supplicant/install)
 
 ifneq ($(LOCAL_TYPE),hostapd)
   define Package/wpa-cli/install
@@ -629,6 +665,7 @@ $(eval $(call BuildPackage,wpad-mesh-wolfssl))
 $(eval $(call BuildPackage,wpad-mini))
 $(eval $(call BuildPackage,wpad-openssl))
 $(eval $(call BuildPackage,wpad-wolfssl))
+$(eval $(call BuildPackage,wpad-custom))
 $(eval $(call BuildPackage,wpa-supplicant))
 $(eval $(call BuildPackage,wpa-supplicant-mesh-openssl))
 $(eval $(call BuildPackage,wpa-supplicant-mesh-wolfssl))
@@ -636,6 +673,7 @@ $(eval $(call BuildPackage,wpa-supplicant-mini))
 $(eval $(call BuildPackage,wpa-supplicant-p2p))
 $(eval $(call BuildPackage,wpa-supplicant-openssl))
 $(eval $(call BuildPackage,wpa-supplicant-wolfssl))
+$(eval $(call BuildPackage,wpa-supplicant-custom))
 $(eval $(call BuildPackage,wpa-cli))
 $(eval $(call BuildPackage,hostapd-utils))
 $(eval $(call BuildPackage,hostapd-common))

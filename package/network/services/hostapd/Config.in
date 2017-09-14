@@ -8,12 +8,14 @@ config WPA_SUPPLICANT_NO_TIMESTAMP_CHECK
 		   PACKAGE_wpa-supplicant-mesh-wolfssl || \
 		   PACKAGE_wpa-supplicant-mini || \
 		   PACKAGE_wpa-supplicant-p2p || \
+		   PACKAGE_wpa-supplicant-custom || \
 		   PACKAGE_wpad || \
 		   PACKAGE_wpad-openssl || \
 		   PACKAGE_wpad-wolfssl || \
 		   PACKAGE_wpad-mini || \
 		   PACKAGE_wpad-mesh-openssl || \
-		   PACKAGE_wpad-mesh-wolfssl
+		   PACKAGE_wpad-mesh-wolfssl || \
+		   PACKAGE_wpad-custom
 	default n
 	help
 	  This disables the timestamp check for certificates in wpa_supplicant
@@ -28,12 +30,14 @@ config WPA_RFKILL_SUPPORT
 		   PACKAGE_wpa-supplicant-mesh-wolfssl || \
 		   PACKAGE_wpa-supplicant-mini || \
 		   PACKAGE_wpa-supplicant-p2p || \
+		   PACKAGE_wpa-supplicant-custom || \
 		   PACKAGE_wpad || \
 		   PACKAGE_wpad-openssl || \
 		   PACKAGE_wpad-wolfssl || \
 		   PACKAGE_wpad-mini || \
 		   PACKAGE_wpad-mesh-openssl || \
-		   PACKAGE_wpad-mesh-wolfssl
+		   PACKAGE_wpad-mesh-wolfssl || \
+		   PACKAGE_wpad-custom
 	default n
 
 config WPA_MSG_MIN_PRIORITY
@@ -78,6 +82,17 @@ config WPA_WOLFSSL
 	select WOLFSSL_HAS_PSK
 	select WOLFSSL_HAS_SESSION_TICKET
 	select WOLFSSL_HAS_WPAS
+
+menu "Configure wpad/wpa-supplicant custom features"
+	depends on PACKAGE_wpa-supplicant-custom || PACKAGE_wpad-custom
+
+	config WPA_ROAMING
+	bool "Enable 802.11r fast BSS transition"
+	default y
+	help
+	  Increases binary size by about 12KiB (uncompressed)
+
+endmenu
 
 config DRIVER_WEXT_SUPPORT
 	bool
