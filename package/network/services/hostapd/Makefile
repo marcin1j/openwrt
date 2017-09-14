@@ -42,6 +42,9 @@ CONFIG_VARIANT:=$(LOCAL_VARIANT)
 ifeq ($(LOCAL_VARIANT),mesh)
   CONFIG_VARIANT:=full
 endif
+ifeq ($(LOCAL_VARIANT),custom)
+  CONFIG_VARIANT:=mini
+endif
 
 ifneq ($(LOCAL_TYPE),hostapd)
   ifeq ($(LOCAL_VARIANT),full)
@@ -74,6 +77,17 @@ DRIVER_MAKEOPTS= \
 
 ifeq ($(LOCAL_VARIANT),full)
   DRIVER_MAKEOPTS += CONFIG_IEEE80211W=$(CONFIG_DRIVER_11W_SUPPORT)
+endif
+
+ifeq ($(LOCAL_VARIANT),custom)
+  ifdef CONFIG_WPA_ROAMING
+    DRIVER_MAKEOPTS += CONFIG_IEEE80211R=y
+  endif
+endif
+
+ifeq ($(LOCAL_VARIANT),custom)
+  PKG_CONFIG_DEPENDS += \
+    CONFIG_WPA_ROAMING
 endif
 
 ifneq ($(LOCAL_TYPE),hostapd)
@@ -116,7 +130,7 @@ define Package/hostapd
 $(call Package/hostapd/Default)
   TITLE+= (full)
   VARIANT:=full
-  CONFLICTS:=wpad wpad-mini wpad-mesh
+  CONFLICTS:=wpad wpad-mini wpad-mesh wpad-custom
 endef
 
 define Package/hostapd/description
@@ -128,7 +142,7 @@ define Package/hostapd-mini
 $(call Package/hostapd/Default)
   TITLE+= (WPA-PSK only)
   VARIANT:=mini
-  CONFLICTS:=wpad wpad-mini wpad-mesh
+  CONFLICTS:=wpad wpad-mini wpad-mesh wpad-custom
 endef
 
 define Package/hostapd-mini/description
@@ -138,7 +152,7 @@ endef
 define Package/hostapd-utils
   $(call Package/hostapd/Default)
   TITLE+= (utils)
-  DEPENDS:=@PACKAGE_hostapd||PACKAGE_hostapd-mini||PACKAGE_wpad||PACKAGE_wpad-mesh||PACKAGE_wpad-mini
+  DEPENDS:=@PACKAGE_hostapd||PACKAGE_hostapd-mini||PACKAGE_wpad||PACKAGE_wpad-mesh||PACKAGE_wpad-mini||PACKAGE_wpad-custom
 endef
 
 define Package/hostapd-utils/description
@@ -187,13 +201,23 @@ define Package/wpad-mesh/description
  This package contains a minimal IEEE 802.1x/WPA Authenticator and Supplicant (with 802.11s mesh and SAE support).
 endef
 
+define Package/wpad-custom
+$(call Package/wpad/Default)
+  TITLE+= (custom)
+  VARIANT:=wpad-custom
+endef
+
+define Package/wpad-custom/description
+  TODO
+endef
+
 define Package/wpa-supplicant
   SECTION:=net
   CATEGORY:=Network
   TITLE:=WPA Supplicant
   URL:=http://hostap.epitest.fi/wpa_supplicant/
   DEPENDS:=$(DRV_DEPENDS) +WPA_SUPPLICANT_OPENSSL:libopenssl
-  CONFLICTS:=wpad wpad-mini wpad-mesh
+  CONFLICTS:=wpad wpad-mini wpad-mesh wpad-custom
   VARIANT:=supplicant-full
 endef
 
@@ -205,7 +229,7 @@ define Package/wpa-supplicant-p2p
   $(Package/wpa-supplicant)
   TITLE:=WPA Supplicant (with Wi-Fi P2P support)
   DEPENDS:=$(DRV_DEPENDS) @PACKAGE_kmod-cfg80211
-  CONFLICTS:=wpad wpad-mini wpad-mesh
+  CONFLICTS:=wpad wpad-mini wpad-mesh wpad-custom
   VARIANT:=supplicant-p2p
 endef
 
@@ -213,7 +237,7 @@ define Package/wpa-supplicant-mesh
   $(Package/wpa-supplicant)
   TITLE:=WPA Supplicant (with 802.11s and SAE)
   DEPENDS:=$(DRV_DEPENDS) +PACKAGE_wpa-supplicant-mesh:libopenssl @PACKAGE_kmod-cfg80211 @(!TARGET_uml||BROKEN)
-  CONFLICTS:=wpad wpad-mesh wpad-mesh
+  CONFLICTS:=wpad wpad-mesh wpad-mesh wpad-cusrom
   VARIANT:=supplicant-mesh
 endef
 
@@ -221,14 +245,22 @@ define Package/wpa-supplicant-mini
   $(Package/wpa-supplicant)
   TITLE:=WPA Supplicant (minimal version)
   DEPENDS:=$(DRV_DEPENDS)
-  CONFLICTS:=wpad wpad-mini wpad-mesh
+  CONFLICTS:=wpad wpad-mini wpad-mesh wpad-custom
   VARIANT:=supplicant-mini
+endef
+
+define Package/wpa-supplicant-custom
+  $(Package/wpa-supplicant)
+  TITLE:=WPA Supplicant (custom version)
+  DEPENDS:=$(DRV_DEPENDS)
+  CONFLICTS:=wpad wpad-mini wpad-mesh wpad-custom
+  VARIANT:=supplicant-custom
 endef
 
 define Package/wpa-cli
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=@PACKAGE_wpa-supplicant||PACKAGE_wpa-supplicant-p2p||PACKAGE_wpad-mini||PACKAGE_wpad||PACKAGE_wpad-mesh
+  DEPENDS:=@PACKAGE_wpa-supplicant||PACKAGE_wpa-supplicant-p2p||PACKAGE_wpad-mini||PACKAGE_wpad||PACKAGE_wpad-mesh||PACKAGE_wpad-custom
   TITLE:=WPA Supplicant command line control utility
 endef
 
@@ -378,6 +410,7 @@ define Package/wpad/install
 endef
 Package/wpad-mini/install = $(Package/wpad/install)
 Package/wpad-mesh/install = $(Package/wpad/install)
+Package/wpad-custom/install = $(Package/wpad/install)
 
 define Package/wpa-supplicant/install
 	$(call Install/supplicant,$(1))
@@ -386,6 +419,7 @@ endef
 Package/wpa-supplicant-mini/install = $(Package/wpa-supplicant/install)
 Package/wpa-supplicant-p2p/install = $(Package/wpa-supplicant/install)
 Package/wpa-supplicant-mesh/install = $(Package/wpa-supplicant/install)
+Package/wpa-supplicant-custom/install = $(Package/wpa-supplicant/install)
 
 ifneq ($(LOCAL_TYPE),hostapd)
   define Package/wpa-cli/install
@@ -406,10 +440,12 @@ $(eval $(call BuildPackage,hostapd-mini))
 $(eval $(call BuildPackage,wpad))
 $(eval $(call BuildPackage,wpad-mesh))
 $(eval $(call BuildPackage,wpad-mini))
+$(eval $(call BuildPackage,wpad-custom))
 $(eval $(call BuildPackage,wpa-supplicant))
 $(eval $(call BuildPackage,wpa-supplicant-mesh))
 $(eval $(call BuildPackage,wpa-supplicant-mini))
 $(eval $(call BuildPackage,wpa-supplicant-p2p))
+$(eval $(call BuildPackage,wpa-supplicant-custom))
 $(eval $(call BuildPackage,wpa-cli))
 $(eval $(call BuildPackage,hostapd-utils))
 $(eval $(call BuildPackage,hostapd-common))
