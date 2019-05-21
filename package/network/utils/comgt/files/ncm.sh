@@ -234,19 +234,21 @@ proto_ncm_teardown() {
 		json_add_string "manufacturer" "$manufacturer"
 	}
 
-	json_load "$(cat /etc/gcom/ncm.json)"
-	json_select "$manufacturer" || {
-		echo "Unsupported modem"
-		proto_notify_error "$interface" UNSUPPORTED_MODEM
-		return 1
-	}
-
-	json_get_vars disconnect
-	[ -n "$disconnect" ] && {
-		eval COMMAND="$disconnect" gcom -d "$device" -s /etc/gcom/runcommand.gcom || {
-			echo "Failed to disconnect"
-			proto_notify_error "$interface" DISCONNECT_FAILED
+	[ -n "$manufacturer" ] && {
+		json_load "$(cat /etc/gcom/ncm.json)"
+		json_select "$manufacturer" || {
+			echo "Unsupported modem"
+			proto_notify_error "$interface" UNSUPPORTED_MODEM
 			return 1
+		}
+
+		json_get_vars disconnect
+		[ -n "$disconnect" ] && {
+			eval COMMAND="$disconnect" gcom -d "$device" -s /etc/gcom/runcommand.gcom || {
+				echo "Failed to disconnect"
+				proto_notify_error "$interface" DISCONNECT_FAILED
+				return 1
+			}
 		}
 	}
 
