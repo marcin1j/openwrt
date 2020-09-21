@@ -12,9 +12,21 @@ W1_SLAVES_DIR:=$(LINUX_DIR)/drivers/w1/slaves
 define KernelPackage/w1
   SUBMENU:=$(W1_MENU)
   TITLE:=Dallas's 1-wire support
-  KCONFIG:=CONFIG_W1
+  KCONFIG:=CONFIG_W1 CONFIG_W1_CON=y
   FILES:=$(LINUX_DIR)/drivers/w1/wire.ko
   DEPENDS:=+kmod-hwmon-core
+  DEPENDS:=+kmod-hwmon-core +W1_NETLINK_CONNECTOR:kmod-connector
+endef
+
+define KernelPackage/w1/config
+  if PACKAGE_kmod-w1
+    config W1_NETLINK_CONNECTOR
+      bool "Netlink userspace connector to kernel W1 subsystem"
+      default n
+      help
+        Build netlink userspace connector to kernel 1-wire subsystem.
+        It's needed by owfs to use kernel 1-wire bus masters.
+  endif
 endef
 
 define KernelPackage/w1/description

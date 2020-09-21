@@ -283,6 +283,16 @@ define Device/tplink_tl-wr741-v1
 endef
 TARGET_DEVICES += tplink_tl-wr741-v1
 
+define Device/tplink_tl-wr741-v1-w1
+  $(Device/tplink-4m)
+  SOC := ar7240
+  DEVICE_MODEL := TL-WR741N/ND OneWire
+  DEVICE_VARIANT := v1/v2
+  TPLINK_HWID := 0x07410001
+  SUPPORTED_DEVICES += tl-wr741nd tplink,tl-wr741-v1
+endef
+TARGET_DEVICES += tplink_tl-wr741-v1-w1
+
 define Device/tplink_tl-wr741nd-v4
   $(Device/tplink-4mlzma)
   SOC := ar9331
