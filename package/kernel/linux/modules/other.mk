@@ -1233,3 +1233,20 @@ define KernelPackage/f71808e-wdt/description
 endef
 
 $(eval $(call KernelPackage,f71808e-wdt))
+
+
+define KernelPackage/connector
+  SUBMENU:=$(OTHER_MENU)
+  TITLE:=Netlink connector
+  KCONFIG:= \
+    CONFIG_CONNECTOR \
+    PROC_EVENTS=n
+  FILES:=$(LINUX_DIR)/drivers/connector/cn.ko
+  AUTOLOAD:=$(call AutoLoad,30,cn)
+endef
+
+define KernelPackage/connector/description
+  Kernel module for netlink userspace-kernelspace connector (cn.ko).
+endef
+
+$(eval $(call KernelPackage,connector))
